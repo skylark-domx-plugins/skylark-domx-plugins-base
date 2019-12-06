@@ -2527,7 +2527,7 @@ define('skylark-langx/Deferred',[
 ],function(Deferred){
     return Deferred;
 });
-define('skylark-langx-emitter/Evented',[
+define('skylark-langx-emitter/Emitter',[
   "skylark-langx-ns/ns",
   "skylark-langx-types",
   "skylark-langx-objects",
@@ -2541,7 +2541,8 @@ define('skylark-langx-emitter/Evented',[
         isFunction = types.isFunction,
         isString = types.isString,
         isEmptyObject = types.isEmptyObject,
-        mixin = objects.mixin;
+        mixin = objects.mixin,
+        safeMixin = objects.safeMixin;
 
     function parse(event) {
         var segs = ("" + event).split(".");
@@ -2551,7 +2552,7 @@ define('skylark-langx-emitter/Evented',[
         };
     }
 
-    var Evented = klass({
+    var Emitter = klass({
         on: function(events, selector, data, callback, ctx, /*used internally*/ one) {
             var self = this,
                 _hub = this._hub || (this._hub = {});
@@ -2603,7 +2604,7 @@ define('skylark-langx-emitter/Evented',[
             return this.on(events, selector, data, callback, ctx, 1);
         },
 
-        trigger: function(e /*,argument list*/ ) {
+        emit: function(e /*,argument list*/ ) {
             if (!this._hub) {
                 return this;
             }
@@ -2804,19 +2805,40 @@ define('skylark-langx-emitter/Evented',[
             }
 
             return this;
+        },
+
+        trigger  : function() {
+            return this.emit.apply(this,arguments);
         }
     });
 
-    return skylark.attach("langx.Evented",Evented);
+    Emitter.createEvent = function (type,props) {
+        var e = new CustomEvent(type,props);
+        return safeMixin(e, props);
+    };
+
+    return skylark.attach("langx.Emitter",Emitter);
 
 });
+define('skylark-langx-emitter/Evented',[
+  "skylark-langx-ns/ns",
+	"./Emitter"
+],function(skylark,Emitter){
+	return skylark.attach("langx.Evented",Emitter);
+});
 define('skylark-langx-emitter/main',[
+	"./Emitter",
 	"./Evented"
-],function(Evented){
-	return Evented;
+],function(Emitter){
+	return Emitter;
 });
 define('skylark-langx-emitter', ['skylark-langx-emitter/main'], function (main) { return main; });
 
+define('skylark-langx/Emitter',[
+    "skylark-langx-emitter"
+],function(Evented){
+    return Evented;
+});
 define('skylark-langx/Evented',[
     "skylark-langx-emitter"
 ],function(Evented){
@@ -3499,6 +3521,7 @@ define('skylark-langx/langx',[
     "./async",
     "./datetimes",
     "./Deferred",
+    "./Emitter",
     "./Evented",
     "./funcs",
     "./hoster",
@@ -3509,7 +3532,7 @@ define('skylark-langx/langx',[
     "./strings",
     "./topic",
     "./types"
-], function(skylark,arrays,ArrayStore,aspect,async,datetimes,Deferred,Evented,funcs,hoster,klass,numbers,objects,Stateful,strings,topic,types) {
+], function(skylark,arrays,ArrayStore,aspect,async,datetimes,Deferred,Emitter,Evented,funcs,hoster,klass,numbers,objects,Stateful,strings,topic,types) {
     "use strict";
     var toString = {}.toString,
         concat = Array.prototype.concat,
@@ -3520,13 +3543,6 @@ define('skylark-langx/langx',[
         safeMixin = objects.safeMixin,
         isFunction = types.isFunction;
 
-
-    function createEvent(type, props) {
-        var e = new CustomEvent(type, props);
-
-        return safeMixin(e, props);
-    }
-    
 
     function funcArg(context, arg, idx, payload) {
         return isFunction(arg) ? arg.call(context, idx, payload) : arg;
@@ -3565,7 +3581,7 @@ define('skylark-langx/langx',[
     }
 
     mixin(langx, {
-        createEvent : createEvent,
+        createEvent : Emitter.createEvent,
 
         funcArg: funcArg,
 
@@ -3586,6 +3602,8 @@ define('skylark-langx/langx',[
         async : async,
         
         Deferred: Deferred,
+
+        Emitter: Emitter,
 
         Evented: Evented,
 
@@ -4076,7 +4094,7 @@ define('skylark-domx-noder/noder',[
                 node.appendChild(html);
             }
 
-
+            return this;
         }
     }
 
@@ -7683,10 +7701,11 @@ define('skylark-domx-eventer/eventer',[
     return skylark.attach("domx.eventer",eventer);
 });
 define('skylark-domx-eventer/main',[
+    "skylark-langx/langx",
     "./eventer",
     "skylark-domx-velm",
     "skylark-domx-query"        
-],function(eventer,velm,$){
+],function(langx,eventer,velm,$){
 
     // from ./eventer
     velm.delegate([
@@ -9188,7 +9207,9 @@ define('skylark-domx-geom/main',[
     $.fn.scrollLeft = $.wraps.wrapper_value(geom.scrollLeft, geom);
 
     $.fn.position =  function(options) {
-        if (!this.length) return
+        if (!this.length) {
+            return this;
+        }
 
         if (options) {
             if (options.of && options.of.length) {
@@ -10004,50 +10025,6 @@ define('skylark-domx-plugins/plugins',[
         return pluginInstance;
     }
 
-    function shortcutter(pluginName,extfn) {
-       /*
-        * Create or get or destory a plugin instance assocated with the element,
-        * and also you can execute the plugin method directory;
-        */
-        return function (elm,options) {
-            var  plugin = instantiate(elm, pluginName,"instance");
-            if ( options === "instance" ) {
-              return plugin || null;
-            }
-            if (!plugin) {
-                plugin = instantiate(elm, pluginName,typeof options == 'object' && options || {});
-                return this;
-            } else  if (options) {
-                var args = slice.call(arguments,1); //2
-                if (extfn) {
-                    var ret =  extfn.apply(plugin,args);
-                    if (ret === undefined) {
-                        ret = this;
-                    }
-                    return ret;
-                } else {
-                    if (typeof options == 'string') {
-                        var methodName = options;
-
-                        if ( !plugin ) {
-                            throw new Error( "cannot call methods on " + pluginName +
-                                " prior to initialization; " +
-                                "attempted to call method '" + methodName + "'" );
-                        }
-
-                        if ( !langx.isFunction( plugin[ methodName ] ) || methodName.charAt( 0 ) === "_" ) {
-                            throw new Error( "no such method '" + methodName + "' for " + pluginName +
-                                " plugin instance" );
-                        }
-
-                        return plugin[methodName].apply(plugin,args);
-                    }                
-                }                
-            }
-
-        }
-
-    }
 
     function shortcutter(pluginName,extfn) {
        /*
@@ -10059,9 +10036,14 @@ define('skylark-domx-plugins/plugins',[
             if ( options === "instance" ) {
               return plugin || null;
             }
+
             if (!plugin) {
                 plugin = instantiate(elm, pluginName,typeof options == 'object' && options || {});
-            } else  if (options) {
+                if (typeof options != "string") {
+                  return this;
+                }
+            } 
+            if (options) {
                 var args = slice.call(arguments,1); //2
                 if (extfn) {
                     return extfn.apply(plugin,args);
