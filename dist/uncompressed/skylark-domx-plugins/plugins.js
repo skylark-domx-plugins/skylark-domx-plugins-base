@@ -132,7 +132,7 @@ define([
                   this.each(function () {
                     var args2 = slice.call(args);
                     args2.unshift(this);
-                    var  ret  = shortcut.apply(null,args2);
+                    var  ret  = shortcut.apply(undefined,args2);
                     if (ret !== undefined) {
                         returnValue = ret;
                         return false;
