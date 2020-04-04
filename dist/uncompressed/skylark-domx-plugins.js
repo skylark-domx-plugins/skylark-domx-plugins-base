@@ -182,7 +182,12 @@ define('skylark-domx-plugins/plugins',[
                                 " plugin instance" );
                         }
 
-                        return plugin[methodName].apply(plugin,args);
+                        var ret = plugin[methodName].apply(plugin,args);
+                        if (ret == plugin) {
+                          ret = undefined;
+                        }
+
+                        return ret;
                     }                
                 }                
             }
@@ -223,7 +228,6 @@ define('skylark-domx-plugins/plugins',[
                     var  ret  = shortcut.apply(undefined,args2);
                     if (ret !== undefined) {
                         returnValue = ret;
-                        return false;
                     }
                   });
                 }

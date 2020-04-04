@@ -94,7 +94,12 @@ define([
                                 " plugin instance" );
                         }
 
-                        return plugin[methodName].apply(plugin,args);
+                        var ret = plugin[methodName].apply(plugin,args);
+                        if (ret == plugin) {
+                          ret = undefined;
+                        }
+
+                        return ret;
                     }                
                 }                
             }
@@ -135,7 +140,6 @@ define([
                     var  ret  = shortcut.apply(undefined,args2);
                     if (ret !== undefined) {
                         returnValue = ret;
-                        return false;
                     }
                   });
                 }
