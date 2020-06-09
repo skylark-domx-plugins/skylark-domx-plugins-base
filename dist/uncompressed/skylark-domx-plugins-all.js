@@ -11022,7 +11022,7 @@ define('skylark-domx-plugins/plugins',[
             datax.removeData(this._elm,this.pluginName );
         },
 
-        _destroy: func.noop,
+        _destroy: funcs.noop,
 
         _delay: function( handler, delay ) {
             function handlerProxy() {
