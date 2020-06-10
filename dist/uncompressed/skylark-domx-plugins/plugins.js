@@ -242,13 +242,13 @@ define([
             return setTimeout( handlerProxy, delay || 0 );
         },
 
-        _velm : function(elm) {
+        elmx : function(elm) {
             elm = elm || this._elm;
             return elmx(elm);
 
         },
 
-        _query : function(elm) {
+        $ : function(elm) {
             elm = elm || this._elm;
             return $(elm);
         },
