@@ -178,6 +178,14 @@ define([
         }
     }
 
+    function parentClass(ctor){
+        if (ctor.hasOwnProperty("superclass")) {
+            return ctor.superclass;
+        }
+
+        return Object.getPrototypeOf(ctor);
+    }
+
  
     var Plugin =   Emitter.inherit({
         klassName: "Plugin",
@@ -189,7 +197,7 @@ define([
 
         _initOptions : function(options) {
           var ctor = this.constructor,
-              cache = ctor.cache = ctor.cache || {},
+              cache = ctor.cache = (ctor.hasOwnProperty("cache") ? ctor.cache : {}),
               defaults = cache.defaults;
           if (!defaults) {
             var  ctors = [];
@@ -198,7 +206,7 @@ define([
               if (ctor === Plugin) {
                 break;
               }
-              ctor = ctor.superclass;
+              ctor = parentClass(ctor);
             } while (ctor);
 
             defaults = cache.defaults = {};
