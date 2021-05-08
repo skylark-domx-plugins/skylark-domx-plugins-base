@@ -1,5 +1,5 @@
 /**
- * skylark-domx-plugins - The skylark plugins library for dom api extension.
+ * skylark-domx-plugins-base - The skylark plugins library for dom api extension.
  * @author Hudaokeji Co.,Ltd
  * @version v0.9.0
  * @link www.skylarkjs.org
@@ -86,7 +86,7 @@
 
 })(function(define,require) {
 
-define('skylark-domx-plugins/plugins',[
+define('skylark-domx-plugins-base/plugins',[
     "skylark-langx-ns",
     "skylark-langx-types",
     "skylark-langx-objects",
@@ -455,13 +455,13 @@ define('skylark-domx-plugins/plugins',[
 
     return  skylark.attach("domx.plugins",plugins);
 });
-define('skylark-domx-plugins/main',[
+define('skylark-domx-plugins-base/main',[
 	"./plugins"
 ],function(plugins){
 	return plugins;
 });
-define('skylark-domx-plugins', ['skylark-domx-plugins/main'], function (main) { return main; });
+define('skylark-domx-plugins-base', ['skylark-domx-plugins-base/main'], function (main) { return main; });
 
 
 },this);
-//# sourceMappingURL=sourcemaps/skylark-domx-plugins.js.map
+//# sourceMappingURL=sourcemaps/skylark-domx-plugins-base.js.map
