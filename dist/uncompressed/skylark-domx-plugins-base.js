@@ -87,6 +87,20 @@
 })(function(define,require) {
 
 define('skylark-domx-plugins-base/plugins',[
+    "skylark-langx-ns"
+], function(skylark) {
+    "use strict";
+
+    var pluginKlasses = {},
+        shortcuts = {};
+
+
+    return  skylark.attach("domx.plugins",{
+        pluginKlasses,
+        shortcuts
+    });
+});
+define('skylark-domx-plugins-base/plugin',[
     "skylark-langx-ns",
     "skylark-langx-types",
     "skylark-langx-objects",
@@ -100,7 +114,8 @@ define('skylark-domx-plugins-base/plugins',[
     "skylark-domx-styler",
     "skylark-domx-fx",
     "skylark-domx-query",
-    "skylark-domx-velm"
+    "skylark-domx-velm",
+    "./plugins"
 ], function(
     skylark,
     types,
@@ -115,156 +130,13 @@ define('skylark-domx-plugins-base/plugins',[
     styler, 
     fx, 
     $, 
-    elmx
+    elmx,
+    plugins
 ) {
     "use strict";
 
     var slice = Array.prototype.slice,
-        concat = Array.prototype.concat,
-        pluginKlasses = {},
-        shortcuts = {};
-
-    /*
-     * Create or get or destory a plugin instance assocated with the element.
-     */
-    function instantiate(elm,pluginName,options) {
-        var pair = pluginName.split(":"),
-            instanceDataName = pair[1];
-        pluginName = pair[0];
-
-        if (!instanceDataName) {
-            instanceDataName = pluginName;
-        }
-
-        var pluginInstance = datax.data( elm, instanceDataName );
-
-        if (options === "instance") {
-            return pluginInstance;
-        } else if (options === "destroy") {
-            if (!pluginInstance) {
-                throw new Error ("The plugin instance is not existed");
-            }
-            pluginInstance.destroy();
-            //datax.removeData( elm, pluginName);
-            pluginInstance = undefined;
-        } else {
-            if (!pluginInstance) {
-                if (options !== undefined && typeof options !== "object") {
-                    throw new Error ("The options must be a plain object");
-                }
-                var pluginKlass = pluginKlasses[pluginName]; 
-                pluginInstance = new pluginKlass(elm,options);
-                datax.data( elm, instanceDataName,pluginInstance );
-            } else if (options) {
-                pluginInstance.reset(options);
-            }
-        }
-
-        return pluginInstance;
-    }
-
-
-    function shortcutter(pluginName,extfn) {
-       /*
-        * Create or get or destory a plugin instance assocated with the element,
-        * and also you can execute the plugin method directory;
-        */
-        return function (elm,options) {
-            var  plugin = instantiate(elm, pluginName,"instance");
-            if ( options === "instance" ) {
-              return plugin || null;
-            }
-
-            if (!plugin) {
-                plugin = instantiate(elm, pluginName,typeof options == 'object' && options || {});
-                if (typeof options != "string") {
-                  return this;
-                }
-            } 
-            if (options) {
-                var args = slice.call(arguments,1); //2
-                if (extfn) {
-                    return extfn.apply(plugin,args);
-                } else {
-                    if (typeof options == 'string') {
-                        var methodName = options;
-
-                        if ( !plugin ) {
-                            throw new Error( "cannot call methods on " + pluginName +
-                                " prior to initialization; " +
-                                "attempted to call method '" + methodName + "'" );
-                        }
-
-                        if ( !types.isFunction( plugin[ methodName ] ) || methodName.charAt( 0 ) === "_" ) {
-                            throw new Error( "no such method '" + methodName + "' for " + pluginName +
-                                " plugin instance" );
-                        }
-
-                        args = slice.call(args,1); //remove method name
-
-                        var ret = plugin[methodName].apply(plugin,args);
-                        if (ret == plugin) {
-                          ret = undefined;
-                        }
-
-                        return ret;
-                    }                
-                }                
-            }
-
-        }
-
-    }
-
-    /*
-     * Register a plugin type
-     */
-    function register( pluginKlass,shortcutName,instanceDataName,extfn) {
-        var pluginName = pluginKlass.prototype.pluginName;
-        
-        pluginKlasses[pluginName] = pluginKlass;
-
-        if (shortcutName) {
-            if (instanceDataName && types.isFunction(instanceDataName)) {
-                extfn = instanceDataName;
-                instanceDataName = null;
-            } 
-            if (instanceDataName) {
-                pluginName = pluginName + ":" + instanceDataName;
-            }
-
-            var shortcut = shortcuts[shortcutName] = shortcutter(pluginName,extfn);
-                
-            $.fn[shortcutName] = function(options) {
-                var returnValue = this;
-
-                if ( !this.length && options === "instance" ) {
-                  returnValue = undefined;
-                } else {
-                  var args = slice.call(arguments);
-                  this.each(function () {
-                    var args2 = slice.call(args);
-                    args2.unshift(this);
-                    var  ret  = shortcut.apply(undefined,args2);
-                    if (ret !== undefined) {
-                        returnValue = ret;
-                    }
-                  });
-                }
-
-                return returnValue;
-            };
-
-            elmx.partial(shortcutName,function(options) {
-                var  ret  = shortcut(this._elm,options);
-                if (ret === undefined) {
-                    ret = this;
-                }
-                return ret;
-            });
-
-        }
-    }
+        concat = Array.prototype.concat;
 
     function parentClass(ctor){
         if (ctor.hasOwnProperty("superclass")) {
@@ -339,14 +211,23 @@ define('skylark-domx-plugins-base/plugins',[
         },
 
         elmx : function(elm) {
-            elm = elm || this._elm;
-            return elmx(elm);
-
+            if (elm) {
+                return elmx(elm);
+            }
+            if (!this._velm) {
+                this._velm = elmx(this._elm);
+            }
+            return this._velm;
         },
 
         $ : function(elm) {
-            elm = elm || this._elm;
-            return $(elm);
+            if (elm) {
+                return $(elm);
+            }
+            if (!this._$elm) {
+                this._$elm = $(this._elm);
+            }            
+            return this._$elm;
         },
 
         option: function( key, value ) {
@@ -421,10 +302,219 @@ define('skylark-domx-plugins-base/plugins',[
 
     });
 
+
+    return  plugins.Plugin = Plugin;
+});
+define('skylark-domx-plugins-base/instantiate',[
+    "skylark-domx-data",
+    "./plugins",
+    "./plugin"
+], function(
+    datax, 
+    plugins,
+    Plugin
+) {
+    "use strict";
+
+    var pluginKlasses = plugins.pluginKlasses;
+
+    /*
+     * Create or get or destory a plugin instance assocated with the element.
+     */
+    function instantiate(elm,pluginName,options) {
+        var pair = pluginName.split(":"),
+            instanceDataName = pair[1];
+        pluginName = pair[0];
+
+        if (!instanceDataName) {
+            instanceDataName = pluginName;
+        }
+
+        var pluginInstance = datax.data( elm, instanceDataName );
+
+        if (options === "instance") {
+            return pluginInstance;
+        } else if (options === "destroy") {
+            if (!pluginInstance) {
+                throw new Error ("The plugin instance is not existed");
+            }
+            pluginInstance.destroy();
+            //datax.removeData( elm, pluginName);
+            pluginInstance = undefined;
+        } else {
+            if (!pluginInstance) {
+                if (options !== undefined && typeof options !== "object") {
+                    throw new Error ("The options must be a plain object");
+                }
+                var pluginKlass = pluginKlasses[pluginName]; 
+                pluginInstance = new pluginKlass(elm,options);
+                datax.data( elm, instanceDataName,pluginInstance );
+            } else if (options) {
+                pluginInstance.reset(options);
+            }
+        }
+
+        return pluginInstance;
+    }
+
     Plugin.instantiate = function(elm,options) {
         return instantiate(elm,this.prototype.pluginName,options);
     };
-    
+
+    return  plugins.instantiate = instantiate;
+});
+define('skylark-domx-plugins-base/shortcutter',[
+    "skylark-langx-types",
+    "./plugins",
+    "./instantiate"
+], function(
+    types,
+    plugins,
+    instantiate
+) {
+    "use strict";
+
+    var slice = Array.prototype.slice;
+
+    function shortcutter(pluginName,extfn) {
+       /*
+        * Create or get or destory a plugin instance assocated with the element,
+        * and also you can execute the plugin method directory;
+        */
+        return function (elm,options) {
+            var  plugin = instantiate(elm, pluginName,"instance");
+            if ( options === "instance" ) {
+              return plugin || null;
+            }
+
+            if (!plugin) {
+                plugin = instantiate(elm, pluginName,typeof options == 'object' && options || {});
+                if (typeof options != "string") {
+                  return this;
+                }
+            } 
+            if (options) {
+                var args = slice.call(arguments,1); //2
+                if (extfn) {
+                    return extfn.apply(plugin,args);
+                } else {
+                    if (typeof options == 'string') {
+                        var methodName = options;
+
+                        if ( !plugin ) {
+                            throw new Error( "cannot call methods on " + pluginName +
+                                " prior to initialization; " +
+                                "attempted to call method '" + methodName + "'" );
+                        }
+
+                        if ( !types.isFunction( plugin[ methodName ] ) || methodName.charAt( 0 ) === "_" ) {
+                            throw new Error( "no such method '" + methodName + "' for " + pluginName +
+                                " plugin instance" );
+                        }
+
+                        args = slice.call(args,1); //remove method name
+
+                        var ret = plugin[methodName].apply(plugin,args);
+                        if (ret == plugin) {
+                          ret = undefined;
+                        }
+
+                        return ret;
+                    }                
+                }                
+            }
+
+        }
+
+    }
+
+
+    return  plugins.shortcutter = shortcutter;
+});
+define('skylark-domx-plugins-base/register',[
+    "skylark-langx-types",
+    "skylark-domx-query",
+    "skylark-domx-velm",
+    "./plugins",
+    "./shortcutter"
+], function(
+    types,
+    $, 
+    elmx,
+    plugins,
+    shortcutter
+) {
+    "use strict";
+
+    var slice = Array.prototype.slice,
+        pluginKlasses = plugins.pluginKlasses,
+        shortcuts = plugins.shortcuts;
+
+    /*
+     * Register a plugin type
+     */
+    function register( pluginKlass,shortcutName,instanceDataName,extfn) {
+        var pluginName = pluginKlass.prototype.pluginName;
+        
+        pluginKlasses[pluginName] = pluginKlass;
+
+        if (shortcutName) {
+            if (instanceDataName && types.isFunction(instanceDataName)) {
+                extfn = instanceDataName;
+                instanceDataName = null;
+            } 
+            if (instanceDataName) {
+                pluginName = pluginName + ":" + instanceDataName;
+            }
+
+            var shortcut = shortcuts[shortcutName] = shortcutter(pluginName,extfn);
+                
+            $.fn[shortcutName] = function(options) {
+                var returnValue = this;
+
+                if ( !this.length && options === "instance" ) {
+                  returnValue = undefined;
+                } else {
+                  var args = slice.call(arguments);
+                  this.each(function () {
+                    var args2 = slice.call(args);
+                    args2.unshift(this);
+                    var  ret  = shortcut.apply(undefined,args2);
+                    if (ret !== undefined) {
+                        returnValue = ret;
+                    }
+                  });
+                }
+
+                return returnValue;
+            };
+
+            elmx.partial(shortcutName,function(options) {
+                var  ret  = shortcut(this._elm,options);
+                if (ret === undefined) {
+                    ret = this;
+                }
+                return ret;
+            });
+
+        }
+    }
+
+    return  plugins.register = register;
+});
+define('skylark-domx-plugins-base/main',[
+    "skylark-domx-query",
+    "skylark-domx-velm",
+	"./plugins",
+	"./instantiate",
+	"./plugin",
+	"./register",
+	"./shortcutter"
+],function($,elmx,plugins,instantiate,Plugin,register,shortcutter){
+    "use strict";
+
+    var slice = Array.prototype.slice;
+
     $.fn.plugin = function(name,options) {
         var args = slice.call( arguments, 1 ),
             self = this,
@@ -441,23 +531,6 @@ define('skylark-domx-plugins-base/plugins',[
         return instantiate.apply(this,[this._elm,name].concat(args));
     }); 
 
-
-    function plugins() {
-        return plugins;
-    }
-     
-    objects.mixin(plugins, {
-        instantiate,
-        Plugin,
-        register,
-        shortcuts
-    });
-
-    return  skylark.attach("domx.plugins",plugins);
-});
-define('skylark-domx-plugins-base/main',[
-	"./plugins"
-],function(plugins){
 	return plugins;
 });
 define('skylark-domx-plugins-base', ['skylark-domx-plugins-base/main'], function (main) { return main; });
