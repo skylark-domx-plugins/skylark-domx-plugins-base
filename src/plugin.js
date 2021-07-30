@@ -120,7 +120,7 @@ define([
 
         $ : function(elm) {
             if (elm) {
-                return $(elm);
+                return $(elm,this._elm);
             }
             if (!this._$elm) {
                 this._$elm = $(this._elm);
