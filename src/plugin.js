@@ -13,6 +13,7 @@ define([
     "skylark-domx-fx",
     "skylark-domx-query",
     "skylark-domx-velm",
+    "skylark-domx",
     "./plugins"
 ], function(
     skylark,
@@ -29,6 +30,7 @@ define([
     fx, 
     $, 
     elmx,
+    domx,
     plugins
 ) {
     "use strict";
@@ -47,6 +49,8 @@ define([
  
     var Plugin =   Emitter.inherit({
         klassName: "Plugin",
+
+        _domx : domx,
 
         _construct : function(elm,options) {
            this._elm = elm;

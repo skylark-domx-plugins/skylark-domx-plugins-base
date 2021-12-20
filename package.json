@@ -24,15 +24,7 @@
   "license": "MIT",
   "bugs": "https://github.com/skylark-domx/skylark-domx-plugins/issues",
   "dependencies": {
-    "skylark-domx-data": "git+https://github.com/skylark-domx/skylark-domx-data.git",
-    "skylark-domx-eventer": "git+https://github.com/skylark-domx/skylark-domx-eventer.git",
-    "skylark-domx-finder": "git+https://github.com/skylark-domx/skylark-domx-finder.git",
-    "skylark-domx-fx": "git+https://github.com/skylark-domx/skylark-domx-fx.git",
-    "skylark-domx-geom": "git+https://github.com/skylark-domx/skylark-domx-geom.git",
-    "skylark-domx-noder": "git+https://github.com/skylark-domx/skylark-domx-noder.git",
-    "skylark-domx-query": "git+https://github.com/skylark-domx/skylark-domx-query.git",
-    "skylark-domx-styler": "git+https://github.com/skylark-domx/skylark-domx-styler.git",
-    "skylark-domx-velm": "git+https://github.com/skylark-domx/skylark-domx-velm.git",
+    "skylark-domx": "git+https://github.com/skylark-domx/skylark-domx.git",
     "skylark-langx": "git+https://github.com/skylark-langx/skylark-langx.git"
   },
   "engines": {
