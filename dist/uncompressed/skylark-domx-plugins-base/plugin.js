@@ -200,7 +200,30 @@ define([
 
         elm : function() {
             return this._elm;
-        }
+        },
+
+        ensureListenedEmitter : $,
+
+        listenTo : function(obj, event, selector,callback, /*used internally*/ one) {
+            if (!(types.isString(obj) || types.isArray(obj) || types.isPlainObject(obj))) {
+                one = callback;
+                callback = selector;
+                selector = event;
+                event = obj;
+                obj = this._elm;
+            }
+            return Emitter.prototype.listenTo.call(obj, event, selector,callback, /*used internally*/ one)
+        },
+
+        unlistenTo : function(obj, event, callback) {
+            if (!(types.isString(obj) || types.isArray(obj) || types.isPlainObject(obj))) {
+                callback = event;
+                event = obj;
+                obj = this._elm;
+            }
+            return Emitter.prototype.unlistenTo.call(obj, event, callback)
+        },
+
 
     });
 
