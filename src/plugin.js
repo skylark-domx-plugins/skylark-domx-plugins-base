@@ -202,7 +202,12 @@ define([
             return this._elm;
         },
 
-        ensureListenedEmitter : $,
+        ensureListenedEmitter : function(obj) {
+            if (!obj.on) {
+                return $(obj)
+            }
+            return obj;
+        },
 
         listenTo : function(obj, event, selector,callback, /*used internally*/ one) {
             if (types.isString(obj) || types.isArray(obj) || types.isPlainObject(obj)) {
