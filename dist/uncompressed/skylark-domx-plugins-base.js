@@ -601,7 +601,7 @@ define('skylark-domx-plugins-base/instantiate',[
     /*
      * Create or get or destory a plugin instance assocated with the element.
      */
-    function instantiate(elm,pluginName,options) {
+    function instantiate(elm,pluginName,options,arg1,arg2,arg3,arg4,arg5) {
         var pair = pluginName.split(":"),
             instanceDataName = pair[1];
         pluginName = pair[0];
@@ -627,7 +627,7 @@ define('skylark-domx-plugins-base/instantiate',[
                     throw new Error ("The options must be a plain object");
                 }
                 var pluginKlass = pluginKlasses[pluginName]; 
-                pluginInstance = new pluginKlass(elm,options);
+                pluginInstance = new pluginKlass(elm,options,arg1,arg2,arg3,arg4,arg5);
                 datax.data( elm, instanceDataName,pluginInstance );
             } else if (options) {
                 pluginInstance.reset(options);
@@ -668,13 +668,15 @@ define('skylark-domx-plugins-base/shortcutter',[
             }
 
             if (!plugin) {
-                plugin = instantiate(elm, pluginName,typeof options == 'object' && options || {});
+                let args = slice.call(arguments,2); //2
+                args.unshift(elm, pluginName,typeof options == 'object' && options || {})
+                plugin = instantiate.apply(plugins,args);
                 if (typeof options != "string") {
                   return this;
                 }
             } 
             if (options) {
-                var args = slice.call(arguments,1); //2
+                let args = slice.call(arguments,1); //2
                 if (extfn) {
                     return extfn.apply(plugin,args);
                 } else {

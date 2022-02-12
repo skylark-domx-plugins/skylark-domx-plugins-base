@@ -23,13 +23,15 @@ define([
             }
 
             if (!plugin) {
-                plugin = instantiate(elm, pluginName,typeof options == 'object' && options || {});
+                let args = slice.call(arguments,2); //2
+                args.unshift(elm, pluginName,typeof options == 'object' && options || {})
+                plugin = instantiate.apply(plugins,args);
                 if (typeof options != "string") {
                   return this;
                 }
             } 
             if (options) {
-                var args = slice.call(arguments,1); //2
+                let args = slice.call(arguments,1); //2
                 if (extfn) {
                     return extfn.apply(plugin,args);
                 } else {

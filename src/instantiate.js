@@ -14,7 +14,7 @@ define([
     /*
      * Create or get or destory a plugin instance assocated with the element.
      */
-    function instantiate(elm,pluginName,options) {
+    function instantiate(elm,pluginName,options,arg1,arg2,arg3,arg4,arg5) {
         var pair = pluginName.split(":"),
             instanceDataName = pair[1];
         pluginName = pair[0];
@@ -40,7 +40,7 @@ define([
                     throw new Error ("The options must be a plain object");
                 }
                 var pluginKlass = pluginKlasses[pluginName]; 
-                pluginInstance = new pluginKlass(elm,options);
+                pluginInstance = new pluginKlass(elm,options,arg1,arg2,arg3,arg4,arg5);
                 datax.data( elm, instanceDataName,pluginInstance );
             } else if (options) {
                 pluginInstance.reset(options);
